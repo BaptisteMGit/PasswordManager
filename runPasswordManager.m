@@ -1,0 +1,1 @@
+pwdManagerApp = PwdManager_App;
