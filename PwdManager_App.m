@@ -2,7 +2,7 @@ classdef PwdManager_App
     
     properties 
         Manager
-        loginWindow
+%         loginWindow
         rootApp
     end
 
@@ -16,7 +16,7 @@ classdef PwdManager_App
             
             % UI
             % Create login window
-            app.loginWindow = PwdManager_loginUI(app.Manager);
+            PwdManager_loginUI(app.Manager);
 
             fprintf('PasswordManager is ready to be used.\n')
         end

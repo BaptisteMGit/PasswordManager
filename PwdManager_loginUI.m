@@ -1,5 +1,5 @@
 classdef PwdManager_loginUI < handle
-% MainUI for password manager 
+% Login UI for password manager 
 %
 % Baptiste Menetrier
     
@@ -45,8 +45,11 @@ classdef PwdManager_loginUI < handle
     end
 
     properties (Hidden=true)
-        username
         pwd
+    end
+
+    properties (Hidden=true, Dependent=true)
+        username
         hashedPwd
     end
     
@@ -90,9 +93,9 @@ classdef PwdManager_loginUI < handle
 
 
             addEditField(app, {'Parent', app.GridLayout, 'Style', 'text', 'Value', '', 'Placeholder', 'Username', ...
-                'LayoutPosition', struct('nRow', 2, 'nCol',4), 'ValueChangedFcn', {@app.usernameChanged}})
+                'LayoutPosition', struct('nRow', 2, 'nCol',4)})
             addEditField(app, {'Parent', app.GridLayout, 'Style', 'text', 'Value', '', 'Placeholder', 'SuperPassword', ...
-                'LayoutPosition', struct('nRow', 3, 'nCol',4), 'ValueChangingFcn', {@app.passwordChanging}})
+                'LayoutPosition', struct('nRow', 3, 'nCol',4), 'ValueChangingFcn', @app.passwordChanging})
 
 
             % Buttons
@@ -109,17 +112,8 @@ classdef PwdManager_loginUI < handle
     %% Callback functions 
     methods 
 
-        function usernameChanged(app, hObject, eventData)
-            app.username = hObject.Value;
-        end 
-
-        function passwordChanged(app, hObject, eventData)
-            app.hashedPwd = hashPwd(hObject.Value); % Store the hashed pwd
-        end 
-
         function passwordChanging(app, hObject, eventData)
-%             pause(0.1)
-            currentPwd = hObject.Value;
+            currentPwd = eventData.Value;
             lengthCurrentPwd = numel(currentPwd);
             lengthStoredPwd = numel(app.pwd);
 
@@ -127,28 +121,33 @@ classdef PwdManager_loginUI < handle
                 app.pwd = [app.pwd currentPwd(end)]; % Update pwd with last character added 
                 % Replace new character by *
                 hiddenPwd(1, 1:lengthCurrentPwd) = '*';
-%                 hObject.Value = hiddenPwd;
-%                 set(hObject, 'Value', hiddenPwd)
+                set(hObject, 'Value', hiddenPwd)
             elseif lengthCurrentPwd < lengthStoredPwd % User hit backspace to delete the last character
                 diff = lengthStoredPwd - lengthCurrentPwd;
                 app.pwd = app.pwd(1:end-diff); % Delete last characters 
-            elseif lengthCurrentPwd == lengthStoredPwd
-                fprintf('Flag   ')
             end 
+
         end 
 
 
         function loginButtonPushed(app, hObject, eventData)
-            [userIsKnown, user] = app.Manager.getUser(app.username);
-
-            if userIsKnown % User is in the database 
-                if strcmp(user.hashedPwd, app.hashedPwd) % Check is pwd is correct 
-                    % Open password manager 
-                    fprintf('Successfully logged in!')
+            if ~isempty(app.username)% Check username is not empty 
+                [userIsKnown, user] = app.Manager.getUser(app.username);
+    
+                if userIsKnown % User is in the database 
+                    if strcmp(user.hashedPwd, app.hashedPwd) % Check is pwd is correct 
+                        % Open password manager 
+                        mainUI = PwdManager_mainUI(user);
+                        fprintf('Successfully logged in!')
+                    else 
+                        uialert(app.Figure, sprintf('Incorrect password for user "%s" !', app.username), 'Incorrect password', 'Icon', 'error')
+                    end
                 else 
-                    uialert(app.Figure, sprintf('Incorrect password for user "%s" !', app.username), 'Error', 'Icon', 'error')
+                    uialert(app.Figure, sprintf('User "%s" is unknown!', app.username), 'Unknown user', 'Icon', 'error')
                 end
-            end
+            else
+                uialert(app.Figure, 'Username is empty !', 'Error', 'Icon', 'error')
+            end 
         end 
 
     end
@@ -162,6 +161,13 @@ classdef PwdManager_loginUI < handle
         function fPosition = get.fPosition(app)
             fPosition = getFigurePosition(app);
         end
+
+        function hashedPwd = get.hashedPwd(app)
+            hashedPwd = hashPwd(app.pwd);
+        end
         
+        function username = get.username(app)
+            username = get(app.handleEditField(1), 'Value');
+        end
     end
 end                                             

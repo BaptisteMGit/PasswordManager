@@ -1,0 +1,2 @@
+PasswordManager = Manager;
+save('PasswordManager')
