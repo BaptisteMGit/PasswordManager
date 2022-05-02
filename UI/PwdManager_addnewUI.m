@@ -6,7 +6,8 @@ classdef PwdManager_addnewUI < handle
     properties
         % User object 
         User
-       
+        mainUI % Handle to main UI 
+
         % Graphics handles
         Figure                  
         GridLayout 
@@ -16,7 +17,7 @@ classdef PwdManager_addnewUI < handle
         handleButton
 
         % Name of the window 
-        Name = "Password manager";
+        Name = "Password manager - add new";
         % App release version 
         Version = 0.1; 
         % Icon 
@@ -47,9 +48,10 @@ classdef PwdManager_addnewUI < handle
     
     %% Constructor of the class 
     methods
-        function app = PwdManager_addnewUI(user)
+        function app = PwdManager_addnewUI(user, mainUI)
             % user object 
             app.User = user;
+            app.mainUI = mainUI;
 
             % Figure 
             app.Figure = uifigure('Name', app.Name, ...
@@ -61,8 +63,7 @@ classdef PwdManager_addnewUI < handle
                             'MenuBar', 'none', ...
                             'Resize', 'on', ...
                             'AutoResizeChildren', 'off', ...
-                            'WindowStyle', 'normal', ...
-                            'CloseRequestFcn', @closeWindowCallback); 
+                            'WindowStyle', 'normal'); 
             
             % Grid Layout
             app.GridLayout = uigridlayout(app.Figure, [app.glNRow, app.glNRow]);
@@ -115,6 +116,7 @@ classdef PwdManager_addnewUI < handle
                 [flag, pwd] = app.checkPassword();
                 if flag
                     app.User.addWebsite(name, pwd, url)
+                    app.mainUI.refreshWebsiteDropdown();
                     fprintf('New website successfuly added!')
                 else 
                     uialert(app.Figure, 'Passwords not identical or empty!', 'Password error', 'Icon', 'error')
@@ -125,7 +127,7 @@ classdef PwdManager_addnewUI < handle
         end
 
         function closeButtonPushed(app, hObject, evenData)
-            % Close window 
+            close(app.Figure)
         end
 
 

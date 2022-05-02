@@ -1,2 +1,3 @@
 PasswordManager = Manager;
-save('PasswordManager')
+save("PasswordManager.mat", "PasswordManager")
+clear

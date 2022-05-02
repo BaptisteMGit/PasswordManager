@@ -33,9 +33,9 @@ classdef PwdManager_mainUI < handle
     properties (Hidden=true)
         % Size of the main window 
         Width = 375;
-        Height = 200;
+        Height = 300;
         % Number of components 
-        glNRow = 5;
+        glNRow = 8;
         glNCol = 5;
         
         % Labels visual properties 
@@ -93,8 +93,10 @@ classdef PwdManager_mainUI < handle
 
 
             % Buttons
-            addButton(app, {'Parent', app.GridLayout, 'Name', 'Add new', 'ButtonPushedFcn', @app.addnewButtonPushed, 'LayoutPosition', struct('nRow', 5, 'nCol', [1, 2])})
-            addButton(app, {'Parent', app.GridLayout, 'Name', 'Logout', 'ButtonPushedFcn', @app.logoutButtonPushed, 'LayoutPosition', struct('nRow', 5, 'nCol', [3, 4])})
+            addButton(app, {'Parent', app.GridLayout, 'Name', 'Add new', 'ButtonPushedFcn', @app.addnewButtonPushed, 'LayoutPosition', struct('nRow', 5, 'nCol', [2, 4])})
+            addButton(app, {'Parent', app.GridLayout, 'Name', 'Edit current', 'ButtonPushedFcn', @app.editButtonPushed, 'LayoutPosition', struct('nRow', 6, 'nCol', [2, 4])})
+            addButton(app, {'Parent', app.GridLayout, 'Name', 'Delete current', 'ButtonPushedFcn', @app.deleteButtonPushed, 'LayoutPosition', struct('nRow', 7, 'nCol', [2, 4])})
+            addButton(app, {'Parent', app.GridLayout, 'Name', 'Logout', 'ButtonPushedFcn', @app.logoutButtonPushed, 'LayoutPosition', struct('nRow', 8, 'nCol', [2, 4])})
 
         end
     end
@@ -109,12 +111,40 @@ classdef PwdManager_mainUI < handle
         
         function addnewButtonPushed(app, hObject, evenData)
             % Open other UI 
-            PwdManager_addnewUI(app.User)
+            PwdManager_addnewUI(app.User, app);
+        end
+
+        function editButtonPushed(app, hObject, evenData)
+            % Open other UI 
+            PwdManager_editUI(app.User, app);
+        end
+
+        function deleteButtonPushed(app, hObject, evenData)
+            msg = sprintf('You are about to delete all information related to website "%s", do you whant to pursue this non reversible operation ?', app.selectedWebsite);
+            title = 'Confirm deletation';
+            selection = uiconfirm(app.Figure, msg, title, ...
+                               'Options',{'Yes, delete', 'No, cancel'}, ...
+                               'DefaultOption', 2, 'Icon', 'info');
+
+            switch selection
+                case 'Yes, delete'
+                    app.User.deleteWebsite(app.selectedWebsite);
+                    app.refreshWebsiteDropdown();
+                    fprintf('Website "%s" successfuly deleted!\n', app.selectedWebsite)
+                case 'No, cancel'
+                    % Do nothing 
+            end     
         end
 
         function logoutButtonPushed(app, hObject, eventData)
             % Logout 
         end 
+
+        function refreshWebsiteDropdown(app)
+            set(app.handleDropDown(1), 'Items', app.User.webNames)
+            set(app.handleDropDown(1), 'Value', app.User.webNames{1})
+            set(app.handleEditField(1), 'Value', app.pwdToDisplay) 
+        end
 
     end
 

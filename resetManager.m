@@ -1,0 +1,2 @@
+delete("PasswordManager.mat");
+initManager();

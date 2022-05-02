@@ -3,6 +3,7 @@ classdef User < handle
     %   Detailed explanation goes here
     
     properties
+        manager
         username 
         hashedPwd % hash code for user SuperPassword
         data % data table containing websites informations and password 
@@ -24,40 +25,55 @@ classdef User < handle
     properties (Hidden=true)
         dataColumns = {'Name', 'Url', 'Password', 'Date'}; % Colum names 
     end
+
     methods
-        function obj = User(username, hashedPwd)
-            if nargin > 0
-                assert(nargin == 2, 'When creating a user both username and pwd must be stated!')
+        function obj = User(manager, username, hashedPwd)
+            obj.manager = manager;
+            if nargin > 1
+                assert(nargin == 3, 'When creating a user both username and pwd must be stated!')
                 obj.username = username;
                 obj.hashedPwd = hashedPwd;
             end 
             
             % Initialize data table 
-            obj.addWebsite("DefaultWebsite", "password", "DefaultUrl")
-%             obj.data = table('DefaultWebsite', 'DefaultUrl', 'DefaultPassword', [], 'VariableNames', obj.dataColumns);
+            obj.initDB();
         end
 
 
+        function initDB(obj)
+            if isempty(obj.data)
+                obj.addWebsite("DefaultWebsite", "DefaultPassword", "DefaultUrl")
+            end
+        end
 
         function deleteWebsite(obj, webName)
             toDelete = (obj.webNames == webName);
-            obj.data(toDelete, :) = []; 
+            if any(find(toDelete))
+                obj.data(toDelete, :) = []; 
+                obj.initDB(); % In case data is empty after deletion 
+            else 
+                warning('Failed to delete website "%s", website missing from database!', webName)
+            end 
         end
 
-        function editWebsite(obj, webName, varagin)
-            newUrl = getVararginValue(varagin, 'Url', obj.getUrl(webName));
-            newPassword = getVararginValue(varagin, 'Password', obj.getPassword(webName));
+        function editWebsite(obj, webName, varargin)
+            newUrl = getVararginValue(varargin, 'Url', obj.getUrl(webName));
+            newPassword = getVararginValue(varargin, 'Password', obj.getPassword(webName));
             newDate = datetime('now');
-            newEncryptedPwd = encryptePwd(newPassword, newDate);
+            newEncryptedPwd = obj.encryptePwd(newPassword, newDate);
 
-            % Updated row to add 
-            newTable = table(webName, newUrl, newEncryptedPwd, newDate, 'VariableNames', obj.dataColumns);
+            % Updated row to commit 
+            webName = convertCharsToStrings(webName);
+            newEncryptedPwd = convertCharsToStrings(newEncryptedPwd);
+            newUrl = convertCharsToStrings(newUrl);
+            newRow = table(webName, newUrl, newEncryptedPwd, newDate, 'VariableNames', obj.dataColumns);
 
-            % Delete old version 
-            obj.deleteWebsite(webName)
+            % Edit line 
+            toEdit = (obj.webNames == webName);
+            obj.data(toEdit, :) = newRow; 
 
-            % Add new version 
-            obj.data = [obj.data; newTable];
+            % Commit changes 
+            obj.manager.commitChange();
         end 
 
         function addWebsite(obj, name, pwd, url)
@@ -70,6 +86,14 @@ classdef User < handle
 
             newTable = table(name, url, encryptedPwd, date, 'VariableNames', obj.dataColumns);
             obj.data = [obj.data; newTable];
+
+            % Commit changes 
+            obj.manager.commitChange();
+
+            % Remove DefaultWebsite once another website has been added 
+            if any(find(obj.webNames == "DefaultWebsite")) % If DefaultWebsite in DB
+                obj.deleteWebsite("DefaultWebsite")
+            end 
         end 
 
         function pwd = getPassword(obj, webName)

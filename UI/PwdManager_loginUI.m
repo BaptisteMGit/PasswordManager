@@ -137,7 +137,7 @@ classdef PwdManager_loginUI < handle
                 if userIsKnown % User is in the database 
                     if strcmp(user.hashedPwd, app.hashedPwd) % Check is pwd is correct 
                         % Open password manager 
-                        mainUI = PwdManager_mainUI(user);
+                        PwdManager_mainUI(user);
                         fprintf('Successfully logged in!')
                     else 
                         uialert(app.Figure, sprintf('Incorrect password for user "%s" !', app.username), 'Incorrect password', 'Icon', 'error')
@@ -152,10 +152,7 @@ classdef PwdManager_loginUI < handle
 
     end
 
-    %% Get methods for dependent properties 
-    % NOTE: even if the implementation looks a bit complicated dependent
-    % properties increase app performance by saving memmory space and
-    % dependent properties can be used to maintain app proportions 
+    %% Get methods 
     methods 
 
         function fPosition = get.fPosition(app)

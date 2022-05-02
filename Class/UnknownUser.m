@@ -6,9 +6,8 @@ classdef UnknownUser < User
     end
     
     methods
-        function obj = UnknownUser()
-            obj.username = 'unknown';
-            obj.hashedPwd = '';
+        function obj = UnknownUser(manager)
+            obj@User(manager, "unknown", "")
         end
        
     end
